@@ -1,0 +1,217 @@
+﻿@page "/Rilevazioni"
+
+
+<div class="max-w-xl mx-auto bg-white rounded-2xl shadow-lg min-h-screen2 flex flex-col overflow-hidden">
+    
+    <div class="p-6 pb-2 border-b border-gray-100">
+
+		<div class="mb-6 p-5 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
+
+			<div class="absolute top-2 right-2">
+				<button @onclick="EffettuaLogout"
+						class="bg-red-600 text-white border border-white-200 w-10 h-10 btn-action shadow-sm flex items-center justify-center hover:bg-white hover:text-white hover:border-white transition-all active:scale-90">
+					<span class="text-lg">⏻</span>
+				</button>
+			</div>
+
+            <div class="flex flex-row mb-1">
+                <div class="w-1/3">
+                    <label class="block text-[10px] text-blue-400  tracking-widest">Matricola</label>
+                </div>
+                <div class="w-2/3 pl-4">
+                    <label class="block text-[10px] text-blue-400  tracking-widest">Nominativo dipendente</label>
+                </div>
+            </div>
+            <div class="flex flex-row items-baseline">
+                <div class="w-1/3">
+                    <span class="text-blue-400 text-xl font-bold">@matricola</span>
+                </div>
+                <div class="w-2/3 pl-4 border-l border-blue-200">
+                    <span class="text-xl text-blue-400 block truncate">@nominativo</span>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="flex flex-row flex-wrap justify-center gap-4 mb-4">
+			<button @onclick="() => mostraConfermaGPS = true" class="bg-blue-600 btn-timb btn-action  hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+                <span class="text-[10px] font-bold">TIMB</span>
+            </button>
+			<button @onclick='() => ApriModale("ferie")' class="bg-green-600 btn-feri btn-action hover:bg-green-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+                <span class="text-[10px] font-bold">FERI</span>
+            </button>
+			<button @onclick='() => ApriModale("permessi")' class="bg-amber-500 btn-perm btn-action  hover:bg-amber-600 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+                <span class="text-[10px] font-bold">PERM</span>
+            </button>
+			<button @onclick='() => ApriModale("malattia")' class="bg-red-600 btn-mala btn-action hover:bg-red-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+                <span class="text-[10px] font-bold">MALA</span>
+            </button>
+			<button @onclick='() => CaricaStorico()' class="bg-teal-600 btn-stor btn-action hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+			   <span class="text-xs">RICH</span>
+			</button>
+
+
+        </div>
+    </div>
+
+    <div class="flex items-center justify-between pt-4 pb-2 px-8 bg-white">
+        <h2 class="text-[11px] text-gray-400 tracking-widest">Registro attività</h2>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 pt-2 bg-white">
+        <div class="timeline">
+            @if (storico == null)
+			{
+	                <p class="text-center text-gray-400 text-xs"></p>
+            }
+			else
+			{
+	                @foreach (var item in storico)
+					{
+		                    <div class="timeline-item">
+		                        <div class="timeline-dot"></div>
+		                        <div class="timeline-content">
+								   <div class="entry-title">
+									   @(item.Tipo == "Ferie" ? "🏖️" : item.Tipo == "Permesso" ? "⏱️" : "📍") @item.Tipo
+								   </div>
+								   <div class="entry-sub">
+									   @item.FormattaDati()
+								   </div>
+								</div>
+								<div class="badge @item.GetStatusCss">@item.Status</div>
+		                    </div>
+	                }
+            }
+        </div>
+    </div>
+</div>
+
+@if (isGpsLoading)
+{
+	<div class="modal" style="display:block; background:rgba(255,255,255,0.8); position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000;">
+		<div class="flex flex-col items-center justify-center h-full">
+			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+			<p class="mt-4 text-blue-600 font-bold">Acquisizione GPS in corso...</p>
+		</div>
+	</div>
+}
+
+
+@if (mostraConfermaGPS)
+{
+	<div class="modal" style="display:block; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999;">
+		<div class="modal-content" style="margin: 20% auto; width:85%; max-width:350px; background:white; border-radius:30px; padding:25px; text-align:center; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+			<div class="text-4xl mb-3">📍</div>
+			<h2 class="text-xl font-bold mb-2">Rilevazione Posizione</h2>
+			<p class="text-gray-500 text-sm mb-6">Per confermare la timbratura, l'app acquisirà la tua posizione GPS attuale.</p>
+
+			<div class="flex flex-col gap-2">
+				<button class="bg-blue-600 text-white p-3 rounded-2xl font-bold active:scale-95"
+						@onclick="InviaTimbratura">
+					ACCONSENTO E INVIA
+				</button>
+				<button class="text-gray-400 p-2 text-sm" @onclick='() => mostraConfermaGPS = false'>
+					Annulla
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+
+@if (mostraModale && tipoRichiesta == "malattia")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Malattia</h2>
+
+			<div class="mb-3">
+				<label>Data Inizio:</label>
+				<input type="date" class="form-control" @bind="dataInizioMalattia" />
+			</div>
+
+			<div class="mb-3">
+				<label>Data Fine:</label>
+				<input type="date" class="form-control" @bind="dataFineMalattia" />
+			</div>
+
+			<div class="mb-3">
+				<label>Note / Motivo:</label>
+				<textarea class="form-control" @bind="motivoMalattia"></textarea>
+			</div>
+
+			<button class="bg-red-600 text-white p-2 rounded w-full mt-2"
+					@onclick="InviaMalattia">
+				Invia Malattia
+			</button>
+		</div>
+	</div>
+}
+
+@if (mostraModale && tipoRichiesta == "permessi")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Permesso</h2>
+
+			<div class="mb-3">
+				<label class="block text-sm font-medium">Giorno:</label>
+				<input type="date" class="w-full border rounded p-2" @bind="dataPermesso" />
+			</div>
+
+			<div class="flex gap-2 mb-3">
+				<div class="flex-1">
+					<label class="block text-sm font-medium">Dalle:</label>
+					<input type="time" class="w-full border rounded p-2" value="oraInizioPermesso" @onchange="@((ChangeEventArgs e) => oraInizioPermesso = e.Value?.ToString() ?? "")"/>
+				</div>
+				<div class="flex-1">
+					<label class="block text-sm font-medium">Alle:</label>
+					<input type="time" class="w-full border rounded p-2" value="oraFinePermesso" @onchange="@((ChangeEventArgs e) => oraFinePermesso = e.Value?.ToString() ?? "")"/>
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="block text-sm font-medium">Motivo:</label>
+				<textarea class="w-full border rounded p-2" @bind="motivoPermesso" placeholder="Specifica motivo..."></textarea>
+			</div>
+
+			<button class="bg-amber-500 text-white p-3 rounded-lg w-full font-bold"
+					@onclick="InviaPermesso">
+				CONFERMA PERMESSO
+			</button>
+		</div>
+	</div>
+}
+
+@if (mostraModale && tipoRichiesta == "ferie")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Ferie 🏖️</h2>
+
+			<div class="mb-3">
+				<label>Dal:</label>
+				<input type="date" class="form-control" @bind="dataInizioFerie" />
+			</div>
+
+			<div class="mb-3">
+				<label>Al:</label>
+				<input type="date" class="form-control" @bind="dataFineFerie" />
+			</div>
+
+			<div class="mb-3">
+				<label>Note:</label>
+				<textarea class="form-control" @bind="motivoFerie" placeholder="Inserisci il motivo..."></textarea>
+			</div>
+
+			<button class="bg-blue-600 text-white p-3 rounded-lg w-full font-bold"
+					@onclick="InviaFerie">
+				CONFERMA FERIE
+			</button>
+		</div>
+	</div>
+}

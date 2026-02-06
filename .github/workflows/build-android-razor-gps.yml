@@ -1,0 +1,37 @@
+name: Build Android Only
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Force .NET 9 Version
+        # Questo crea un file che obbliga GitHub a usare l'SDK 9
+        run: |
+          echo '{ "sdk": { "version": "9.0.100", "rollForward": "latestMinor" } }' > global.json
+
+      - name: Install MAUI Android Workload
+        run: dotnet workload install maui-android
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build Android APK
+        run: dotnet build -c Release -f net9.0-android --no-restore
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-Android-Pronta
+          path: bin/Release/net9.0-android/*-Signed.apk

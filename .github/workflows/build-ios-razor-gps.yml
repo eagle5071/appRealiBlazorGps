@@ -1,0 +1,65 @@
+name: Build-iOS-Diagnostic-Mode
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Forza SDK 8 via global.json
+        run: echo '{"sdk":{"version":"8.0.100","rollForward":"latestFeature"}}' > global.json
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Chirurgia Estrema Progetto
+        run: |
+          PROJ=$(find . -name "*.csproj" -print -quit)
+          # Trasforma tutto in net8.0
+          sed -i '' 's/net9.0/net8.0/g' "$PROJ"
+          # Forza Target singolo iOS
+          sed -i '' 's|<TargetFrameworks>.*</TargetFrameworks>|<TargetFrameworks>net8.0-ios</TargetFrameworks>|g' "$PROJ"
+          sed -i '' 's|<TargetFramework>.*</TargetFramework>|<TargetFramework>net8.0-ios</TargetFramework>|g' "$PROJ"
+          # TRUCCO: Disabilitiamo temporaneamente UseMaui se continua a chiedere Tizen
+          # O meglio, forziamo il compilatore a ignorare i workload mancanti a livello di file
+          echo "Verifica file:"
+          grep "TargetFramework" "$PROJ"
+
+      - name: Installazione Workload MAUI Completo
+        # Invece di 'ios', installiamo 'maui' che include Tizen e zittisce l'errore
+        # Usiamo --no-cache per accelerare se possibile
+        run: dotnet workload install maui --ignore-failed-sources
+
+      - name: Compilazione iOS
+        run: |
+          PROJ=$(find . -name "*.csproj" -print -quit)
+          rm -rf **/obj **/bin
+          
+          # Aggiungiamo MtouchNoSymbolStrip per evitare crash su runner macos
+          dotnet build "$PROJ" -f net8.0-ios -c Release \
+            /p:RuntimeIdentifier=ios-arm64 \
+            /p:EnableCodeSigning=false \
+            /p:CodesignKey="" \
+            /p:CodesignProvision="" \
+            /p:_SkipCodesign=true \
+            /p:MtouchLink=None \
+            /p:StaticWebAssetsEnabled=true \
+            /p:CheckEolTargetFramework=false \
+            /p:TargetPlatformVersion=17.0 \
+            /p:SkipValidateWorkloads=true
+
+      - name: Archiviazione Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-iOS-SenzaFirma
+          path: |
+            bin/Release/net8.0-ios/ios-arm64/*.app

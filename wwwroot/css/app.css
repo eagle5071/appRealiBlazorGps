@@ -1,0 +1,451 @@
+﻿/* ============================================================
+   1. STRUTTURA IOS & RESET
+   ============================================================ */
+html, body {
+ overflow: hidden;
+ height: 100%;
+ width: 100%;
+ position: fixed;
+ margin: 0;
+ padding: 0;
+ font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+ -webkit-font-smoothing: antialiased;
+}
+
+.h-screen {
+ height: 100vh !important;
+ height: -webkit-fill-available !important;
+}
+
+/* ============================================================
+   2. CLASSI LAYOUT TAILWIND (Per il tuo file Razor)
+   ============================================================ */
+.flex {
+ display: flex !important;
+}
+
+.flex-col {
+ flex-direction: column !important;
+}
+
+.flex-row {
+ flex-direction: row !important;
+}
+
+.flex-wrap {
+ flex-wrap: wrap !important;
+}
+
+.flex-1 {
+ flex: 1 1 0% !important;
+ min-height: 0;
+}
+
+.flex-shrink-0 {
+ flex-shrink: 0 !important;
+}
+
+.items-center {
+ align-items: center !important;
+}
+
+.items-baseline {
+ align-items: baseline !important;
+}
+
+.justify-center {
+ justify-content: center !important;
+}
+
+.justify-between {
+ justify-content: space-between !important;
+}
+
+.overflow-hidden {
+ overflow: hidden !important;
+}
+
+.overflow-y-auto {
+ overflow-y: auto !important;
+ -webkit-overflow-scrolling: touch !important;
+}
+
+/* ============================================================
+   3. FONT E TESTI (OTTIMIZZATI PER STORICO MINI)
+   ============================================================ */
+/* Testate */
+.text-xl {
+ font-size: 1.05rem !important;
+}
+/* Nominativo */
+.text-lg {
+ font-size: 0.9rem !important;
+}
+
+.text-sm {
+ font-size: 0.8rem !important;
+}
+
+/* Etichette */
+.text-\[10px\] {
+ font-size: 8px !important;
+}
+
+.text-\[11px\] {
+ font-size: 9px !important;
+}
+
+/* --- FOCUS: STORICO MINI --- */
+.entry-title {
+ font-size: 0.75rem !important; /* Molto piccolo */
+ font-weight: 700;
+ color: #374151;
+ line-height: 1 !important;
+}
+
+.entry-sub {
+ font-size: 0.65rem !important; /* Ultra piccolo per date/dati */
+ color: #9ca3af;
+ line-height: 1.2 !important;
+ margin-top: 1px !important;
+}
+
+.badge {
+ font-size: 7px !important;
+ padding: 1px 4px !important;
+ border-radius: 4px !important;
+ height: fit-content;
+}
+
+/* ============================================================
+   4. SPAZIATURE E DIMENSIONI (Salva-spazio)
+   ============================================================ */
+.p-4 {
+ padding: 0.7rem !important;
+}
+
+.p-5 {
+ padding: 0.8rem !important;
+}
+
+.p-6 {
+ padding: 0.7rem !important;
+}
+/* Padding interno storico */
+.pt-4 {
+ padding-top: 0.6rem !important;
+}
+
+.pb-2 {
+ padding-bottom: 0.3rem !important;
+}
+
+.px-8 {
+ padding-left: 1rem !important;
+ padding-right: 1rem !important;
+}
+
+.mb-6 {
+ margin-bottom: 0.5rem !important;
+}
+
+.mb-4 {
+ margin-bottom: 0.4rem !important;
+}
+
+.gap-4 {
+ gap: 0.5rem !important;
+}
+
+/* Pulsanti compatti */
+.w-14 {
+ width: 2.8rem !important;
+ height: 2.8rem !important;
+}
+
+.w-10 {
+ width: 2rem !important;
+ height: 2rem !important;
+}
+
+/* ============================================================
+   5. COMPONENTI E TIMELINE
+   ============================================================ */
+.timeline-item {
+ display: flex;
+ gap: 8px;
+ margin-bottom: 8px; /* Ridotto spazio tra righe storico */
+ padding-left: 4px;
+}
+
+.timeline-dot {
+ width: 6px;
+ height: 6px;
+ background: #60a5fa;
+ border-radius: 50%;
+ margin-top: 3px;
+ flex-shrink: 0;
+}
+
+/* Colori Badge Stati */
+.bg-green-100 {
+ background-color: #dcfce7 !important;
+ color: #166534 !important;
+}
+
+.bg-yellow-100 {
+ background-color: #fef9c3 !important;
+ color: #854d0e !important;
+}
+
+.bg-gray-100 {
+ background-color: #f3f4f6 !important;
+ color: #374151 !important;
+}
+
+/* Colori Pulsanti e Sfondi */
+.bg-white {
+ background-color: #ffffff !important;
+}
+
+.bg-blue-50 {
+ background-color: #f0f7ff !important;
+}
+
+.bg-blue-600 {
+ background-color: #2563eb !important;
+}
+
+.bg-green-600 {
+ background-color: #16a34a !important;
+}
+
+.bg-amber-500 {
+ background-color: #f59e0b !important;
+}
+
+.bg-red-600 {
+ background-color: #dc2626 !important;
+}
+
+.bg-teal-600 {
+ background-color: #0d9488 !important;
+}
+
+.text-white {
+ color: #ffffff !important;
+}
+
+
+.modal {
+ position: fixed;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ background: rgba(0,0,0,0.5);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ z-index: 100;
+}
+
+/* Modali compatte */
+.modal-content {
+ background: white;
+ padding: 1rem;
+ border-radius: 1rem;
+ width: 92%;
+ max-height: 80vh;
+ font-size: 0.85rem;
+}
+
+
+/* Seleziona i bottoni colorati della dashboard */
+.btn-action {
+ width: 56px !important; /* Corrisponde a w-14 */
+ height: 56px !important; /* Corrisponde a h-14 */
+ border-radius: 50% !important; /* Forza il cerchio perfetto */
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ border: none;
+ cursor: pointer;
+ transition: transform 0.1s;
+ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+ .btn-action:active {
+  transform: scale(0.95);
+ }
+
+
+/* --- ADATTAMENTO PER SCHERMI PICCOLI (iPhone SE) --- */
+@media (max-height: 670px) {
+ .btn-action {
+  width: 36px !important; /* Rimpiccioliti leggermente per far risalire lo storico */
+  height: 36px !important;
+ }
+
+  .btn-action span {
+   font-size: 9px !important; /* Testo leggermente più piccolo nei cerchi */
+  }
+
+ /* Riduce il gap tra i bottoni per non farli andare a capo 
+    .gap-4 {
+        gap: 0.6rem !important;
+    }*/
+}
+
+
+/* Nasconde definitivamente il menu laterale e la barra superiore di default */
+.sidebar, .top-row {
+ display: none !important;
+}
+
+/* Fa sì che il contenuto occupi tutto lo spazio senza padding extra */
+.page {
+ padding: 0 !important;
+}
+
+/* ============================================================
+   6. CSS SPECIFICO PER LOGIN.RAZOR
+   ============================================================ */
+
+/* Contenitore Sfondo */
+.bg-gray-100 {
+ background-color: #f3f4f6 !important;
+}
+
+.min-h-screen {
+ min-height: 100vh !important;
+}
+
+.min-h-screen2 {
+ min-height: 98vh !important;
+margin-top:1vh!important;
+}
+
+
+
+/* Box di Login */
+.max-w-md {
+ max-width: 28rem !important;
+}
+
+.shadow-xl {
+ box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Titoli e Testi Login */
+.text-3xl {
+ font-size: 1.5rem !important;
+}
+/* Ridotto da 1.875rem per iPhone SE */
+.text-gray-700 {
+ color: #374151 !important;
+}
+
+.text-gray-800 {
+ color: #1f2937 !important;
+}
+
+/* Form e Input */
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+ margin-top: 1rem !important;
+}
+/* Ridotto lo spazio tra i campi */
+
+.block {
+ display: block !important;
+}
+
+.font-medium {
+ font-weight: 500 !important;
+}
+
+.mb-1 {
+ margin-bottom: 0.25rem !important;
+}
+
+.mb-8 {
+ margin-bottom: 1.5rem !important;
+}
+/* Ridotto margine titolo */
+
+/* Stile Input (Molto importante per il tocco iOS) */
+.px-4 {
+ padding-left: 1rem !important;
+ padding-right: 1rem !important;
+}
+
+.py-3 {
+ padding-top: 0.7rem !important;
+ padding-bottom: 0.7rem !important;
+}
+/* Leggermente più bassi */
+
+.border-gray-300 {
+ border-color: #d1d5db !important;
+}
+
+.rounded-lg {
+ border-radius: 0.5rem !important;
+}
+
+input[type="text"], input[type="password"] {
+ appearance: none;
+ -webkit-appearance: none;
+ width: 100%;
+ box-sizing: border-box; /* Evita che l'input esca dal box */
+ font-size: 16px !important; /* IMPORTANTE: Su iOS evita lo zoom automatico quando clicchi */
+}
+
+/* Bottone Accedi */
+.py-3 {
+ padding-top: 0.75rem !important;
+ padding-bottom: 0.75rem !important;
+}
+
+.transition {
+ transition-property: all !important;
+}
+
+.duration-200 {
+ duration: 200ms !important;
+}
+
+/* Errore Login */
+.text-red-500 {
+ color: #ef4444 !important;
+}
+
+.mt-4 {
+ margin-top: 1rem !important;
+}
+
+.text-center {
+ text-align: center !important;
+}
+
+/* --- OTTIMIZZAZIONE TASTIERA IPHONE SE --- */
+@media (max-height: 670px) {
+ .min-h-screen {
+  align-items: flex-start !important; /* Sposta il box in alto invece che al centro */
+  padding-top: 2rem !important;
+ }
+
+ .p-8 {
+  padding: 1.2rem !important;
+ }
+ /* Riduce il respiro del box */
+ .mb-8 {
+  margin-bottom: 1rem !important;
+ }
+
+ .text-3xl {
+  font-size: 1.2rem !important;
+ }
+}
+
+

@@ -13,11 +13,25 @@
 	<array>
 		<string>arm64</string>
 	</array>
+	
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 	</dict>
+    
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Questa app deve comunicare con il server presenze sulla rete locale o VPN.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Questa app ha bisogno della tua posizione per la rilevazione della presenza quando attiva.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Questa app ha bisogno della tua posizione per validare la timbratura anche durante l'invio in background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Questa app ha bisogno della tua posizione per la rilevazione della presenza.</string>
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -31,11 +45,20 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Questa app ha bisogno della tua posizione per la rilevazione della presenza.</string>
+
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.reali.apprealiblazorgps</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

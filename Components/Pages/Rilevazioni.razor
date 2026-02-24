@@ -51,6 +51,21 @@
 			<button @onclick='() => CaricaStorico()' class="bg-teal-600 btn-stor btn-action hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
 			   <span class="text-xs">RICH</span>
 			</button>
+
+<button @onclick="TestConnessione">CONTROLLA STATO</button>
+
+@code {
+    async Task TestConnessione() {
+        try {
+            var url = Setting.ServerUrl; // o dove tieni l'IP
+            await App.Current.MainPage.DisplayAlert("DEBUG", $"URL: {url}", "OK");
+        } catch (Exception ex) {
+             await App.Current.MainPage.DisplayAlert("ERRORE", ex.Message, "OK");
+        }
+    }
+}
+
+
 @* 			<button @onclick='() =>  {Setting.MostraConfigurazione = !Setting.MostraConfigurazione; Setting.MostraStatoRete = !Setting.MostraStatoRete; }' class="bg-teal-600 btn-stor btn-action hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
 				<span class="text-xs">Setting</span>
 			</button> *@

@@ -106,32 +106,22 @@ public partial class Rilevazioni: IDisposable
  {
   try
   {
-   // 1. Protezione nullo
    if (Setting == null) return;
 
    if (Setting.UseStorage)
    {
-    // 2. Esegui le operazioni locali prima di quelle di rete
     AggiornaConteggioCoda();
-
-    // 3. NON bloccare l'avvio della pagina per la sincronizzazione
-    // Se SincronizzaCoda fallisce o è lento, non deve morire tutto
-    _ = Task.Run(async () => {
-     try
-     {
-      await SincronizzaCoda();
-     }
-     catch { /* Errore silenzioso in background */ }
-    });
+    // NON usare Task.Run qui. 
+    // Usa una funzione "Fire and Forget" ma sul thread principale,
+    // oppure aspetta che finisca prima di caricare lo storico.
+    await SincronizzaCoda();
    }
 
-   // 4. Carica lo storico DOPO aver messo in sicurezza il resto
    await CaricaStorico();
   }
   catch (Exception ex)
   {
-   // Questo ti dirà se l'app crasha all'avvio
-   _ = App.Current.MainPage.DisplayAlert("Errore Async", ex.Message, "OK");
+   _ = App.Current.MainPage.DisplayAlert("Errore", ex.Message, "OK");
   }
  }
 

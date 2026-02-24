@@ -183,10 +183,15 @@ public partial class Rilevazioni: IDisposable
 
  private async Task CaricaStorico()
  {
+  await App.Current.MainPage.DisplayAlert("Storico", "Step:1", "OK");
+
   if (string.IsNullOrEmpty(matricola)) return;
 
 
   var url = Setting.ServerUrl;
+  await App.Current.MainPage.DisplayAlert("Storico", "url:"+url, "OK");
+  await App.Current.MainPage.DisplayAlert("Storico", "Step:2", "OK");
+
 
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
   if (!url.StartsWith("http"))
@@ -194,6 +199,8 @@ public partial class Rilevazioni: IDisposable
    url = $"http://{url}";
   }
 
+  await App.Current.MainPage.DisplayAlert("Storico", "Step:3", "OK");
+  await App.Current.MainPage.DisplayAlert("Storico", "url:" + url, "OK");
 
 
   try
@@ -202,6 +209,7 @@ public partial class Rilevazioni: IDisposable
    //var response = await Http.GetAsync($"{Costanti.apiurl}/api/rilevazionitimbrature/storico/{matricola}");
    var response = await Http.GetAsync($"{url}/api/rilevazionitimbrature/storico/{matricola}");
    var jsonGrezzo = await response.Content.ReadAsStringAsync();
+   await App.Current.MainPage.DisplayAlert("Storico", "jsongrezzo:" + jsonGrezzo, "OK");
 
    // 2. Configuriamo la deserializzazione
    var options = new JsonSerializerOptions
@@ -217,6 +225,7 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
+   await App.Current.MainPage.DisplayAlert("Storico", ex.Message+" --- "+ ex.InnerException, "OK");
    Console.WriteLine($"Errore: {ex.Message}");
   }
  }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 
@@ -38,6 +38,15 @@ namespace appRealiBlazorGps.Components.Pages
   {
    errorMessage = ""; // Reset dell'errore ad ogni tentativo
 
+   // 1. Se sappiamo già che è in manutenzione, blocchiamo l'invio
+   if (Setting.ServerInManutenzione)
+   {
+    Setting.popupChiusoManualmente = false;
+    Setting.NotifyChanges();
+    return;
+   }
+
+
    try
    {
     // Definiamo l'oggetto da inviare (deve corrispondere alla tua API)
@@ -67,6 +76,8 @@ namespace appRealiBlazorGps.Components.Pages
 
     if (response.IsSuccessStatusCode)
     {
+     Setting.ServerInManutenzione = false; // Reset fondamentale
+     Setting.NotifyChanges();
      // Leggiamo la risposta (Token, User, ecc.)
      var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
@@ -86,11 +97,15 @@ namespace appRealiBlazorGps.Components.Pages
     }
     else
     {
+     Setting.ServerInManutenzione = false;
+     Setting.NotifyChanges();
      errorMessage = "Credenziali non valide. Riprova.";
     }
    }
    catch (Exception ex)
    {
+    Setting.ServerInManutenzione = false;
+    Setting.NotifyChanges();
     // Gestione errori di rete o server offline
     errorMessage = "Errore di connessione: " + ex.Message;
     if (ex.InnerException != null)

@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using appRealiBlazorGps.Models;
-using Microsoft.Maui.Networking; //Per controllare la presenza della connettività
 
 namespace appRealiBlazorGps.Components.Pages;
 
@@ -23,10 +21,10 @@ public partial class Rilevazioni: IDisposable
 
 
 
- [Inject] public NavigationManager Nav { get; set; }
+ [Inject] public NavigationManager? Nav { get; set; } = default!;
 
- [Inject] public HttpClient Http { get; set; }
- [Inject] public IJSRuntime JS { get; set; }
+ [Inject] public HttpClient? Http { get; set; } = default!;
+ [Inject] public IJSRuntime? JS { get; set; } = default!;
 
  [Inject] public AppSettingsService? Setting { get; set; }
 
@@ -41,17 +39,10 @@ public partial class Rilevazioni: IDisposable
  private UserModello? utenteLoggato;
 
 
- //public Rilevazioni(AppSettingsService settings)  //Costruttore .....
- //{
- // Setting = settings;
-
- //}
-
-
  private void ForzaRefresh() => InvokeAsync(StateHasChanged);
 
  // 1. IL METODO DEVE ESSERE DEFINITO QUI (livello classe)
- private async void OnConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+ private async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
  {
   await InvokeAsync(async () =>
   {
@@ -65,33 +56,82 @@ public partial class Rilevazioni: IDisposable
 
  protected override void OnInitialized()
  {
-  // Ora Setting è già disponibile grazie all'attributo [Inject]
-  Setting.popupChiusoManualmente = false;
-
-  //if (Setting != null)
+  try
   {
+   // 1. Controllo di sicurezza fondamentale
+   if (Setting == null) return;
+
+   Setting.popupChiusoManualmente = false;
+
+   // 2. Disiscrizione preventiva (per evitare doppie registrazioni in caso di refresh)
+   Setting.OnSettingsChanged -= ForzaRefresh;
    Setting.OnSettingsChanged += ForzaRefresh;
-   // 2. AGGANCIO (Usa il nome del metodo sopra)
-   Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+
+   // 3. Connettività (assicurati che sia disponibile)
+   try
+   {
+    Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+    Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+   }
+   catch
+   {
+    // Alcuni dispositivi iOS vecchi o simulatori possono dare errore qui
+   }
+  }
+  catch (Exception ex)
+  {
+   // Se non vedi questo alert, allora il problema non è qui
+   // Ma se lo vedi, hai trovato perché le API non partivano!
+   _ = App.Current.MainPage.DisplayAlert("Errore Inizializzazione", ex.Message, "OK");
   }
  }
 
  public void Dispose()
  {
+
   if (Setting != null) Setting.OnSettingsChanged -= ForzaRefresh;
-  // Scolleghiamo l'evento quando l'utente lascia la pagina
-  Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+  // Se Connectivity.Current è già stato distrutto dal sistema o è null, 
+  // questo potrebbe lanciare un'eccezione che "sporca" lo stato dell'app.
+  try
+  {
+   Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+  }
+  catch { }
+
+
  }
 
 
  protected override async Task OnInitializedAsync()
  {
-  if (Setting.UseStorage == true)
+  try
   {
-   // 1. Appena si apre la pagina, controlla se ci sono vecchi dati salvati
-   AggiornaConteggioCoda();
-   // 2. Prova subito a inviarli se c'è rete
-   await SincronizzaCoda();
+   // 1. Protezione nullo
+   if (Setting == null) return;
+
+   if (Setting.UseStorage)
+   {
+    // 2. Esegui le operazioni locali prima di quelle di rete
+    AggiornaConteggioCoda();
+
+    // 3. NON bloccare l'avvio della pagina per la sincronizzazione
+    // Se SincronizzaCoda fallisce o è lento, non deve morire tutto
+    _ = Task.Run(async () => {
+     try
+     {
+      await SincronizzaCoda();
+     }
+     catch { /* Errore silenzioso in background */ }
+    });
+   }
+
+   // 4. Carica lo storico DOPO aver messo in sicurezza il resto
+   await CaricaStorico();
+  }
+  catch (Exception ex)
+  {
+   // Questo ti dirà se l'app crasha all'avvio
+   _ = App.Current.MainPage.DisplayAlert("Errore Async", ex.Message, "OK");
   }
  }
 
@@ -486,9 +526,16 @@ public partial class Rilevazioni: IDisposable
  public async Task InviaTimbratura()
  {
 
+  await App.Current.MainPage.DisplayAlert("Info", "Fase:1" , "OK");
+
   // FASE 1. Recupero il token
   var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
   var url = Setting.ServerUrl;
+
+  await App.Current.MainPage.DisplayAlert("Info", "Token:" + token, "OK");
+  await App.Current.MainPage.DisplayAlert("Info", "URL:" + url, "OK");
+
+
 
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
   if (!url.StartsWith("http"))
@@ -591,6 +638,9 @@ public partial class Rilevazioni: IDisposable
    }
   }
 
+  await App.Current.MainPage.DisplayAlert("Info", "Fase:2", "OK");
+
+
 
   try
   {
@@ -600,32 +650,38 @@ public partial class Rilevazioni: IDisposable
    request.Content = JsonContent.Create(data);
    var response = await Http.SendAsync(request);
 
-   // 2. Controllo specifico per il batch "In Pausa" (Errore 503)
-   Setting.popupChiusoManualmente=false;
-   Setting.NotifyChanges();
-   if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
-   {
-    Setting.ServerInManutenzione = true;
-    Setting.NotifyChanges();
-    return;
-   }
+   //// 2. Controllo specifico per il batch "In Pausa" (Errore 503)
+   //Setting.popupChiusoManualmente=false;
+   //Setting.NotifyChanges();
+   //if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+   //{
+   // Setting.ServerInManutenzione = true;
+   // Setting.NotifyChanges();
+   // return;
+   //}
+   await App.Current.MainPage.DisplayAlert("Info", "Fase:3", "OK");
 
    if (response.IsSuccessStatusCode)
    {
-    Setting.ServerInManutenzione = false;
-    Setting.NotifyChanges();
+    await App.Current.MainPage.DisplayAlert("Info", "Fase:4", "OK");
+
+    //Setting.ServerInManutenzione = false;
+    //Setting.NotifyChanges();
     await CaricaStorico(); // Aggiorna la timeline per vedere il nuovo punto
    }
    else
    {
-    Setting.ServerInManutenzione = false; // Se risponde (anche male), non è manutenzione
-    Setting.NotifyChanges();
+    //Setting.ServerInManutenzione = false; // Se risponde (anche male), non è manutenzione
+    //Setting.NotifyChanges();
+    await App.Current.MainPage.DisplayAlert("Info", "Fase:5", "OK");
+
     if ( Setting.UseStorage == true ) {
      await SalvaOffline(data);
      AggiornaConteggioCoda();
      await App.Current.MainPage.DisplayAlert("Offline", "Connessione assente. La timbratura è stata salvata sul telefono e verrà inviata appena possibile.", "OK");
     }
     else{
+     await App.Current.MainPage.DisplayAlert("Info", "Fase:6", "OK");
 
      // Leggiamo il messaggio di errore che arriva dal server
      var errorDetails = await response.Content.ReadAsStringAsync();
@@ -639,8 +695,10 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
-   Setting.ServerInManutenzione = false; // Non è 503, è un problema di rete
-   Setting.NotifyChanges();
+   await App.Current.MainPage.DisplayAlert("Info", "Fase:7", "OK");
+
+   //Setting.ServerInManutenzione = false; // Non è 503, è un problema di rete
+   //Setting.NotifyChanges();
    if (Setting.UseStorage == true ) {
     await SalvaOffline(data);
     AggiornaConteggioCoda();

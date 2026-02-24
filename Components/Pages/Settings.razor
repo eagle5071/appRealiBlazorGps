@@ -1,0 +1,154 @@
+﻿@page "/settings"
+@inject AppSettingsService Setting
+@inject NavigationManager Nav
+
+<div class="settings-container">
+	<div class="settings-card shadow-sm">
+		<div class="header">
+			<i class="oi oi-cog icon-spin"></i>
+			<h3>Configurazione</h3>
+			<p class="text-muted">Imposta i parametri di connessione</p>
+		</div>
+
+		<hr />
+
+		<div class="form-body">
+			<div class="form-group mb-4">
+				<label class="form-label fw-bold">Indirizzo IP / URL Server</label>
+				<div class="input-group">
+					<span class="input-group-text"><i class="oi oi-globe"></i></span>
+					<input @bind="serverIp" class="form-control form-control-lg" placeholder="es. 192.168.1.100" />
+				</div>
+				<small class="text-muted">L'indirizzo a cui inviare i dati sincronizzati.</small>
+			</div>
+
+			<div class="form-check form-switch mb-4 mt-2">
+				<input type="checkbox" @bind="useGeo" class="form-check-input" id="geoCheck" role="switch" />
+				<label class="form-check-label fw-bold" for="geoCheck">Abilita Geolocalizzazione</label>
+			</div>
+
+			<div class="form-check form-switch mb-4 mt-2">
+				<input type="checkbox" @bind="useSto" class="form-check-input" id="geoCheck" role="switch" />
+				<label class="form-check-label fw-bold" for="geoCheck">Abilita salvataggio locale</label>
+			</div>
+
+			<div class="actions d-grid gap-2">
+				<button class="btn btn-primary btn-lg" @onclick="Save">
+					<i class="oi oi-check"></i> Salva e Continua
+				</button>
+
+				@if (Setting.IsConfigured)
+				{
+					<button class="btn btn-outline-secondary" @onclick="Cancel">Annulla</button>
+				}
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	/* Contenitore principale: sposta tutto verso il basso */
+	.settings-container {
+		padding-top: 10vh; /* Sposta il contenuto al 10% dell'altezza dello schermo */
+		padding-left: 20px;
+		padding-right: 20px;
+		display: flex;
+		justify-content: center;
+		min-height: 100vh;
+		background-color: #f8f9fa;
+	}
+
+	/* La "scheda" che contiene il form */
+	.settings-card {
+		background: white;
+		padding: 2rem;
+		border-radius: 15px;
+		max-width: 500px;
+		width: 100%;
+		height: fit-content;
+		border: 1px solid #dee2e6;
+	}
+
+	.header {
+		text-align: center;
+		margin-bottom: 1.5rem;
+	}
+
+		.header h3 {
+			margin-top: 10px;
+			color: #007bff;
+			font-weight: 700;
+		}
+
+	/* Stile personalizzato per l'input */
+	.form-control:focus {
+		border-color: #007bff;
+		box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+	}
+
+	/* Animazione icona (opzionale) */
+	.icon-spin {
+		font-size: 2rem;
+		color: #6c757d;
+	}
+
+	/* Adattamento per schermi molto piccoli */
+	@@media (max-width: 400px) {
+		.settings-container {
+			padding-top: 5vh;
+		}
+
+		.settings-card {
+			padding: 1.2rem;
+		}
+	}
+</style>
+
+
+@code {
+	// Cattura il parametro dalla URL (es: /settings?returnUrl=rilevazioni)
+	[Parameter]
+	[SupplyParameterFromQuery]
+	public string? returnUrl { get; set; }
+
+	private string? serverIp;
+	private bool useGeo;
+	private bool useSto;
+
+	protected override void OnInitialized()
+	{
+		// Carica i valori esistenti se presenti
+		serverIp = Setting.ServerUrl;
+		useGeo = Setting.UseGeolocation;
+		useSto = Setting.UseStorage;
+
+	}
+
+	private void Save()
+	{
+		if (!string.IsNullOrWhiteSpace(serverIp))
+		{
+			Setting.ServerUrl = serverIp;
+			Setting.UseGeolocation = useGeo;
+			Setting.UseStorage = useSto;
+			TornaIndietro();
+		}
+	}
+
+	private void Cancel() => TornaIndietro();
+
+	private void TornaIndietro()
+	{
+		// Se returnUrl è "rilevazioni", torna lì, altrimenti vai alla Home "/"
+		if (returnUrl == "rilevazioni")
+		{
+			Nav.NavigateTo("/rilevazioni"); // Assicurati che il path sia corretto
+		}
+		else
+		{
+			Nav.NavigateTo("/");
+		}
+		Setting.MostraConfigurazione = false;
+		Setting.MostraStatoRete = false;
+	}
+}

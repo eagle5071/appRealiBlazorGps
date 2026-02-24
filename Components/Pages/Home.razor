@@ -1,0 +1,141 @@
+﻿@page "/"
+
+<div class="bg-gray-100 flex items-center justify-center min-h-screen">
+	<div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl mx-4">
+		<div class="text-center mb-8">
+			<h1 class="text-3xl font-bold text-gray-800">Benvenuto</h1>
+			<p class="text-gray-500">Accedi al portale presenze</p>
+		</div>
+
+		<form @onsubmit="HandleLogin" class="space-y-6">
+			<div>
+				<label class="block text-sm font-medium text-gray-700 mb-1">Utente</label>
+				<input type="text" @bind="username" required
+					   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+					   placeholder="Inserisci la tua login">
+			</div>
+
+			<div>
+				<label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+				<input type="password" @bind="password" required
+					   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+					   placeholder="••••••••">
+			</div>
+
+			<button type="submit"
+					class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200">
+				Accedi
+			</button>
+
+			@* Pulsante Impostazioni *@
+			<button @onclick="VaiAiSettaggi"
+					class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
+				<i class="oi oi-cog"></i>
+				MODIFICA IMPOSTAZIONI
+			</button>
+		</form>
+
+		@if (!string.IsNullOrEmpty(errorMessage))
+		{
+			<div class="mt-4 text-red-500 text-sm text-center">
+				@errorMessage
+			</div>
+		}
+		@code {
+			private void VaiAiSettaggi()
+			{
+				Nav.NavigateTo("/settings");
+			}
+		}
+	</div>
+</div>
+
+@if (Setting.ServerInManutenzione && !Setting.popupChiusoManualmente)
+{
+	<div class="maintenance-overlay">
+		<div class="maintenance-popup">
+			<div class="icon-container">🚧</div>
+
+			<h3 class="maint-title">Manutenzione</h3>
+			<p class="maint-text">
+				Il server è attualmente in manutenzione.
+				Alcune funzioni potrebbero non essere disponibili.
+			</p>
+
+			<button class="maint-btn-close" @onclick="() => Setting.popupChiusoManualmente = true">
+				HO CAPITO, CHIUDI
+			</button>
+		</div>
+
+	   <style>
+	.maintenance-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(15, 23, 42, 0.8); /* Blu scuro profondo trasparente */
+		backdrop-filter: blur(4px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 10000;
+		padding: 20px;
+	}
+
+	.maintenance-popup {
+		background: white;
+		padding: 24px;
+		border-radius: 20px;
+		text-align: center;
+		max-width: 300px;
+		box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+	}
+
+	.icon-container {
+		font-size: 40px;
+		margin-bottom: 10px;
+	}
+
+	.maint-title {
+		color: #1e293b;
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin-bottom: 8px;
+	}
+
+	.maint-text {
+		color: #64748b;
+		font-size: 0.85rem;
+		margin-bottom: 20px;
+	}
+
+	.maint-btn-close {
+		background: #f1f5f9;
+		color: #475569;
+		border: none;
+		padding: 10px 20px;
+		border-radius: 10px;
+		font-weight: 600;
+		font-size: 0.75rem;
+		width: 100%;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+		.maint-btn-close:active {
+			background: #e2e8f0;
+			transform: scale(0.98);
+		}
+
+</style>
+
+
+	</div>
+
+
+
+
+
+}
+

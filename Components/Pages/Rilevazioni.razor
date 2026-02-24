@@ -1,0 +1,481 @@
+﻿@page "/Rilevazioni"
+@implements IDisposable
+
+
+<div class="max-w-xl mx-auto bg-white rounded-2xl shadow-lg flex flex-col" style="margin-top:5px;margin-bottom:5px;height: @(Setting.MostraConfigurazione || Setting.MostraStatoRete? "70vh" : "98vh")!important; overflow: hidden; position: relative;">
+    
+    <div class="p-6 pb-2 border-b border-gray-100">
+
+		<div class="mb-6 p-5 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
+
+			<div class="absolute top-2 right-2">
+				<button @onclick="EffettuaLogout"
+						class="bg-red-600 text-white border border-white-200 w-10 h-10 btn-action shadow-sm flex items-center justify-center hover:bg-white hover:text-white hover:border-white transition-all active:scale-90">
+					<span class="text-lg">X</span>
+				</button>
+			</div>
+
+            <div class="flex flex-row mb-1">
+                <div class="w-1/3">
+                    <label class="block text-[10px] text-blue-400  tracking-widest">Matricola</label>
+                </div>
+                <div class="w-2/3 pl-4">
+                    <label class="block text-[10px] text-blue-400  tracking-widest">Nominativo dipendente</label>
+                </div>
+            </div>
+            <div class="flex flex-row items-baseline">
+                <div class="w-1/3">
+                    <span class="text-blue-400 text-xl font-bold">@matricola</span>
+                </div>
+                <div class="w-2/3 pl-4 border-l border-blue-200">
+                    <span class="text-xl text-blue-400 block truncate">@nominativo</span>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="flex flex-row flex-wrap justify-center gap-4 mb-4">
+			<button @onclick="() => { if (Setting.UseGeolocation) mostraConfermaGPS = true; else InviaTimbratura(); }" class="bg-blue-600 btn-timb btn-action  hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+				<span class="text-xs">TIMB</span>
+            </button>
+			<button @onclick='() => ApriModale("ferie")' class="bg-green-600 btn-feri btn-action hover:bg-green-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+				<span class="text-xs">FERI</span>
+            </button>
+			<button @onclick='() => ApriModale("permessi")' class="bg-amber-500 btn-perm btn-action  hover:bg-amber-600 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+				<span class="text-xs">PERM</span>
+            </button>
+			<button @onclick='() => ApriModale("malattia")' class="bg-red-600 btn-mala btn-action hover:bg-red-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+				<span class="text-xs">MALA</span>
+            </button>
+			<button @onclick='() => CaricaStorico()' class="bg-teal-600 btn-stor btn-action hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+			   <span class="text-xs">RICH</span>
+			</button>
+@* 			<button @onclick='() =>  {Setting.MostraConfigurazione = !Setting.MostraConfigurazione; Setting.MostraStatoRete = !Setting.MostraStatoRete; }' class="bg-teal-600 btn-stor btn-action hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-md flex items-center justify-center transition-transform active:scale-90">
+				<span class="text-xs">Setting</span>
+			</button> *@
+
+        </div>
+    </div>
+
+	<div class="flex items-center justify-between pt-4 pb-2 px-8 bg-white" >
+        <h2 class="text-[11px] text-gray-400 tracking-widest">Registro attività</h2>
+    </div>
+
+	<div class="flex-1 overflow-y-auto p-6 pt-2 bg-white" style="-webkit-overflow-scrolling: touch;">
+        <div class="timeline">
+            @if (storico == null)
+			{
+	                <p class="text-center text-gray-400 text-xs"></p>
+            }
+			else
+			{
+	                @foreach (var item in storico)
+					{
+							<div class="timeline-item d-flex align-items-center justify-content-between">
+		                        <div class="timeline-dot"></div>
+								<div class="timeline-content" style="flex-grow: 1; margin-left: 15px;">
+								   <div class="entry-title">
+									   @(item.Tipo == "Ferie" ? "🏖️" : item.Tipo == "Permesso" ? "⏱️" : "📍") @item.Tipo
+								   </div>
+								   <div class="entry-sub">
+									   @((MarkupString)item.FormattaDati())
+								   </div>
+								</div>
+								<div class="badge @item.GetStatusCss" style="margin-left: 50px; white-space: nowrap;">@item.Status</div>
+		                    </div>
+	                }
+
+
+            }
+        </div>
+
+
+
+	</div>
+	<button @onclick="() => { Setting.MostraConfigurazione = !Setting.MostraConfigurazione; Setting.MostraStatoRete = !Setting.MostraStatoRete; }"
+			class="btn-settings-pro">
+		<i class="oi oi-cog icon-spin-hover" style="font-size: 12px;">...</i>
+	</button>
+	<style>
+		.btn-settings-pro {
+			position: fixed;
+			bottom: 25px;
+			right: 25px;
+			width: 50px;
+			height: 50px;
+			/* Sfondo blu profondo con leggera trasparenza */
+			background: rgba(37, 99, 235, 0.9);
+			/* Effetto sfocatura dietro il tasto (Glassmorphism) */
+			backdrop-filter: blur(4px);
+			-webkit-backdrop-filter: blur(4px);
+			color: white;
+			border-radius: 16px; /* Arrotondato moderno, non cerchio perfetto */
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 9999;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+			cursor: pointer;
+		}
+
+			/* Effetto quando viene premuto (Feedback tattile) */
+			.btn-settings-pro:active {
+				transform: scale(0.85);
+				background: #1e40af;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+			}
+
+		/* Animazione icona: ruota leggermente al passaggio (se usi il mouse) */
+		.icon-spin-hover {
+			font-size: 20px;
+			transition: transform 0.5s ease;
+		}
+
+/* 		.btn-settings-pro:hover .icon-spin-hover {
+			transform: rotate(90deg);
+		} */
+	</style>
+</div>
+
+
+
+@if (Setting.ServerInManutenzione && !Setting.popupChiusoManualmente)
+{
+<div class="maintenance-overlay">
+	<div class="maintenance-popup">
+		<div class="icon-container">🚧</div>
+
+			<h3 class="maint-title">Manutenzione</h3>
+			<p class="maint-text">
+				Il server è attualmente in manutenzione.
+				Alcune funzioni potrebbero non essere disponibili.
+			</p>
+
+			<button class="maint-btn-close" @onclick="() => Setting.popupChiusoManualmente = true">
+				HO CAPITO, CHIUDI
+			</button>
+		</div>
+
+		<style>
+			.maintenance-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(15, 23, 42, 0.8); /* Blu scuro profondo trasparente */
+				backdrop-filter: blur(4px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 10000;
+				padding: 20px;
+			}
+
+			.maintenance-popup {
+				background: white;
+				padding: 24px;
+				border-radius: 20px;
+				text-align: center;
+				max-width: 300px;
+				box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+			}
+
+			.icon-container {
+				font-size: 40px;
+				margin-bottom: 10px;
+			}
+
+			.maint-title {
+				color: #1e293b;
+				font-size: 1.1rem;
+				font-weight: 700;
+				margin-bottom: 8px;
+			}
+
+			.maint-text {
+				color: #64748b;
+				font-size: 0.85rem;
+				margin-bottom: 20px;
+			}
+
+			.maint-btn-close {
+				background: #f1f5f9;
+				color: #475569;
+				border: none;
+				padding: 10px 20px;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 0.75rem;
+				width: 100%;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+				.maint-btn-close:active {
+					background: #e2e8f0;
+					transform: scale(0.98);
+				}
+
+		</style>
+
+
+	</div>
+
+
+
+
+}
+
+
+@if (Setting.MostraStatoRete || Setting.MostraConfigurazione)
+{
+	<div class="max-w-xl mx-auto mt-1 px-1">
+		<div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+
+			@* --- SEZIONE 1: STATO RETE (Sempre visibile se MostraStatoRete è true) --- *@
+			@if (Setting.MostraStatoRete)
+			{
+				<div class="p-4 border-b border-gray-50">
+					<div class="flex items-center justify-between mb-3">
+						<div class="flex items-center gap-2">
+							<div class="w-2 h-2 rounded-full @(Connectivity.Current.NetworkAccess == NetworkAccess.Internet ? "bg-green-500" : "bg-red-500")"></div>
+							<span class="text-xs font-bold text-gray-600 uppercase tracking-tight">
+								@(Connectivity.Current.NetworkAccess == NetworkAccess.Internet ? "Online" : "Offline")
+							</span>
+							<p style="font-size: 7px; letter-spacing: 0.05em; line-height: 1;" class="text-gray-400 uppercase mb-0.5">@Setting.ServerUrl</p>
+
+						</div>
+
+						@if (conteggioCoda > 0)
+						{
+							<div class="flex items-center gap-2 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+								<span class="text-[9px] font-bold text-amber-600 uppercase">In coda:</span>
+								<span class="bg-amber-500 text-white text-[9px] font-bold px-2 rounded-full">@conteggioCoda</span>
+							</div>
+						}
+						else
+						{
+							<span class="text-[10px] text-gray-400 italic">Dati sincronizzati</span>
+						}
+					</div>
+
+					<button @onclick="SincronizzaCoda"
+							class="w-full py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+						<i class="oi oi-loop-circular"></i> SINCRONIZZA DATI
+					</button>
+				</div>
+			}
+
+			@* --- SEZIONE 2: CONFIGURAZIONE SISTEMA --- *@
+			@if (Setting.MostraConfigurazione)
+			{
+				<div class="p-4 bg-gray-50/50">
+@* 					<div class="text-center mb-4">
+						<p class="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Server Endpoint</p>
+						<p class="font-mono text-xs text-blue-500 font-bold break-all">@Setting.ServerUrl</p>
+					</div> *@
+
+					<div class="flex items-center justify-around text-center mb-4">
+						<div class="flex-1">
+							<p style="font-size: 7px; letter-spacing: 0.05em; line-height: 1;" class="text-gray-400 uppercase mb-0.5">Geolocalizzazione</p>
+							<p class="text-xs font-bold @(Setting.UseGeolocation ? "text-green-600" : "text-amber-500")">
+								@(Setting.UseGeolocation ? "On" : "Off")
+							</p>
+						</div>
+						<div class="w-px h-6 bg-gray-200"></div>
+						<div class="flex-1">
+							<p style="font-size: 7px; letter-spacing: 0.05em; line-height: 1;" class="text-gray-400 uppercase mb-0.5">Storage Locale</p>
+							<p class="text-xs font-bold @(Setting.UseStorage ? "text-green-600" : "text-amber-500")">
+								@(Setting.UseStorage ? "On" : "Off")
+							</p>
+						</div>
+					</div>
+
+					<button @onclick="VaiAiSettaggi"
+							class="w-full py-2 bg-white border border-gray-200 text-gray-500 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+						<i class="oi oi-cog"></i> IMPOSTAZIONI
+					</button>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+
+
+
+
+
+
+@code {
+	private void VaiAiSettaggi()
+	{
+		Nav.NavigateTo("/settings?returnUrl=rilevazioni");
+	}
+}
+
+
+@if (isGpsLoading)
+{
+	<div class="modal" style="display:block; background:rgba(255,255,255,0.8); position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000;">
+		<div class="flex flex-col items-center justify-center h-full">
+			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+			<p class="mt-4 text-blue-600 font-bold">Acquisizione GPS in corso...</p>
+		</div>
+	</div>
+}
+
+
+@if (mostraConfermaGPS)
+{
+	<div class="modal" style="display:block; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999;">
+		<div class="modal-content" style="margin: 20% auto; width:85%; max-width:350px; background:white; border-radius:30px; padding:25px; text-align:center; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+			<div class="text-4xl mb-3">📍</div>
+			<h2 class="text-xl font-bold mb-2">Rilevazione Posizione</h2>
+			<p class="text-gray-500 text-sm mb-6">Per confermare la timbratura, l'app acquisirà la tua posizione GPS attuale.</p>
+
+			<div class="flex flex-col gap-2">
+				<button class="bg-blue-600 text-white p-3 rounded-2xl font-bold active:scale-95"
+						@onclick="InviaTimbratura">
+					ACCONSENTO E INVIA
+				</button>
+				<button class="text-gray-400 p-2 text-sm" @onclick='() => mostraConfermaGPS = false'>
+					Annulla
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+
+@if (mostraModale && tipoRichiesta == "malattia")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Malattia</h2>
+
+			<div class="mb-3">
+				<label>Data Inizio:</label>
+				<input type="date" class="form-control" @bind="dataInizioMalattia" />
+			</div>
+
+			<div class="mb-3">
+				<label>Data Fine:</label>
+				<input type="date" class="form-control" @bind="dataFineMalattia" />
+			</div>
+
+			<div class="mb-3">
+				<label>Note / Motivo:</label>
+				<textarea class="form-control" @bind="motivoMalattia"></textarea>
+			</div>
+
+			<button class="bg-red-600 text-white p-2 rounded w-full mt-2"
+					@onclick="InviaMalattia">
+				Invia Malattia
+			</button>
+		</div>
+	</div>
+}
+
+@if (mostraModale && tipoRichiesta == "permessi")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Permesso</h2>
+
+			<div class="mb-3">
+				<label class="block text-sm font-medium">Giorno:</label>
+				<input type="date" class="w-full border rounded p-2" @bind="dataPermesso" />
+			</div>
+
+			<div class="flex gap-2 mb-3">
+				<div class="flex-1">
+					<label class="block text-sm font-medium">Dalle:</label>
+					<input type="time" class="w-full border rounded p-2" value="oraInizioPermesso" @onchange="@((ChangeEventArgs e) => oraInizioPermesso = e.Value?.ToString() ?? "")"/>
+				</div>
+				<div class="flex-1">
+					<label class="block text-sm font-medium">Alle:</label>
+					<input type="time" class="w-full border rounded p-2" value="oraFinePermesso" @onchange="@((ChangeEventArgs e) => oraFinePermesso = e.Value?.ToString() ?? "")"/>
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="block text-sm font-medium">Motivo:</label>
+				<textarea class="w-full border rounded p-2" @bind="motivoPermesso" placeholder="Specifica motivo..."></textarea>
+			</div>
+
+			<button class="bg-amber-500 text-white p-3 rounded-lg w-full font-bold"
+					@onclick="InviaPermesso">
+				CONFERMA PERMESSO
+			</button>
+		</div>
+	</div>
+}
+
+@if (mostraModale && tipoRichiesta == "ferie")
+{
+	<div class="modal">
+		<div class="modal-content">
+			<span class="close" @onclick="ChiudiModale">&times;</span>
+			<h2 class="text-xl font-bold mb-4">Richiesta Ferie 🏖️</h2>
+
+			<div class="mb-3">
+				<label>Dal:</label>
+				<input type="date" class="form-control" @bind="dataInizioFerie" />
+			</div>
+
+			<div class="mb-3">
+				<label>Al:</label>
+				<input type="date" class="form-control" @bind="dataFineFerie" />
+			</div>
+
+			<div class="mb-3">
+				<label>Note:</label>
+				<textarea class="form-control" @bind="motivoFerie" placeholder="Inserisci il motivo..."></textarea>
+			</div>
+
+			<button class="bg-blue-600 text-white p-3 rounded-lg w-full font-bold"
+					@onclick="InviaFerie">
+				CONFERMA FERIE
+			</button>
+		</div>
+	</div>
+}
+
+@if (mostraConfermaLogout)
+{
+	@* Sfondo oscurato *@
+	<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+
+		@* Box Modale *@
+		<div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
+
+			@* Icona o Simbolo (Opzionale, per stile) *@
+			<div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+				<i class="oi oi-account-logout text-2xl"></i>
+			</div>
+
+			<h4 class="text-xl font-bold text-gray-800 mb-2">Vuoi uscire?</h4>
+			<p class="text-gray-500 mb-6">La sessione corrente verrà chiusa e dovrai rientrare.</p>
+
+			@* CONTENITORE PULSANTI ALLINEATI *@
+			<div class="flex flex-row gap-3">
+				<button class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-2xl transition-colors"
+						@onclick="() => mostraConfermaLogout = false">
+					Annulla
+				</button>
+
+				<button class="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-lg shadow-red-200 transition-all active:scale-95"
+						@onclick="ConfermaLogoutEffettiva">
+					Esci
+				</button>
+			</div>
+		</div>
+	</div>
+}

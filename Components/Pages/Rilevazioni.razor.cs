@@ -16,10 +16,7 @@ public partial class Rilevazioni: IDisposable
  public bool mostraConfigurazione = false;
  private bool isGpsLoading = false;
 
-
  private int conteggioCoda = 0;
-
-
 
  [Inject] public NavigationManager? Nav { get; set; } = default!;
 
@@ -82,7 +79,7 @@ public partial class Rilevazioni: IDisposable
   {
    // Se non vedi questo alert, allora il problema non è qui
    // Ma se lo vedi, hai trovato perché le API non partivano!
-   _ = App.Current.MainPage.DisplayAlert("Errore Inizializzazione", ex.Message, "OK");
+   _ = App.Current.MainPage.DisplayAlert("OnInitialized", ex.Message, "OK");
   }
  }
 
@@ -100,7 +97,6 @@ public partial class Rilevazioni: IDisposable
 
 
  }
-
 
  protected override async Task OnInitializedAsync()
  {
@@ -121,7 +117,7 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
-   _ = App.Current.MainPage.DisplayAlert("Errore", ex.Message, "OK");
+   _ = App.Current.MainPage.DisplayAlert("OnInitializedAsync", ex.Message, "OK");
   }
  }
 
@@ -166,32 +162,99 @@ public partial class Rilevazioni: IDisposable
   Nav.NavigateTo("/");
  }
 
+ private dynamic selectedItem = null;
+ private bool isLoadingReason = false;
+
+ private async Task RecoverReason(dynamic item)
+ {
+  // Se l'utente clicca sull'elemento già aperto, lo chiudiamo
+  if (selectedItem == item)
+  {
+   selectedItem = null;
+   return;
+  }
+
+  // Impostiamo l'elemento selezionato e attiviamo il caricamento
+  selectedItem = item;
+
+  // Carichiamo la Reason dall'API solo se non l'abbiamo già caricata
+  //if (string.IsNullOrEmpty(item.Reason))
+  {
+   isLoadingReason = true;
+   StateHasChanged();
+   try
+   {
+    // Sostituisci con la tua chiamata API reale
+    // Esempio: item.Reason = await Http.GetStringAsync($"api/presenze/reason/{item.Codice}");
+    item.ReasonRaw = await GetReasonFromApi(item);
+   }
+   catch (Exception ex)
+   {
+    item.ReasonRaw = "Impossibile recuperare la motivazione.";
+   }
+   finally
+   {
+    isLoadingReason = false;
+    StateHasChanged();
+   }
+  }
+ }
+
+ // Esempio di metodo per la chiamata
+ private async Task<string> GetReasonFromApi(dynamic item)
+ {
+
+  var url = Setting.ServerUrl.ToLower();
+  // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
+  if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+  {
+   url = $"http://{url}";
+  }
+
+
+  // Qui metti la tua logica HttpClient
+  // Esempio finto:
+  var response = await Http.GetStringAsync($"{url}/api/rilevazionitimbrature/getreason?tipo={item.Tipo}&id={item.Id}");
+ return response;
+
+  //await Task.Delay(500); // Simula attesa rete
+  //return "Caricato da API: Richiesta approvata dal responsabile.";
+ }
+
 
 
  #region "Storico"
 
 
+ public MarkupString FormattaRagione(string ragione)
+ {
+  if (string.IsNullOrEmpty(ragione)) return (MarkupString)"";
+
+  // Cerchiamo le parentesi quadre e mettiamo uno span rosso intorno ad esse
+  // Sostituisce "[" con "<span style='color:red'>[" 
+  // e "]" con "]</span>"
+  var testoFormattato = ragione
+      .Replace("[", "<span style='color:red; font-weight:bold;'>[")
+      .Replace("]", "]</span>");
+
+  return (MarkupString)testoFormattato;
+ }
+
+
  private async Task CaricaStorico()
  {
-  await App.Current.MainPage.DisplayAlert("Storico", "Step:1", "OK");
 
-  if (string.IsNullOrEmpty(matricola)) return;
+  if (string.IsNullOrEmpty(matricola)) {
+   //await App.Current.MainPage.DisplayAlert("Carica storico", "Matricola assente", "OK");
+   return;
+  }
 
-
-  var url = Setting.ServerUrl;
-  await App.Current.MainPage.DisplayAlert("Storico", "url:"+url, "OK");
-  await App.Current.MainPage.DisplayAlert("Storico", "Step:2", "OK");
-
-
+  var url = Setting.ServerUrl.ToLower();
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
-  if (!url.StartsWith("http"))
+  if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
   {
    url = $"http://{url}";
   }
-
-  await App.Current.MainPage.DisplayAlert("Storico", "Step:3", "OK");
-  await App.Current.MainPage.DisplayAlert("Storico", "url:" + url, "OK");
-
 
   try
   {
@@ -199,7 +262,6 @@ public partial class Rilevazioni: IDisposable
    //var response = await Http.GetAsync($"{Costanti.apiurl}/api/rilevazionitimbrature/storico/{matricola}");
    var response = await Http.GetAsync($"{url}/api/rilevazionitimbrature/storico/{matricola}");
    var jsonGrezzo = await response.Content.ReadAsStringAsync();
-   await App.Current.MainPage.DisplayAlert("Storico", "jsongrezzo:" + jsonGrezzo, "OK");
 
    // 2. Configuriamo la deserializzazione
    var options = new JsonSerializerOptions
@@ -215,7 +277,7 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
-   await App.Current.MainPage.DisplayAlert("Storico", ex.Message+" --- "+ ex.InnerException, "OK");
+   //await App.Current.MainPage.DisplayAlert("Storico", ex.Message+" --- "+ ex.InnerException, "OK");
    Console.WriteLine($"Errore: {ex.Message}");
   }
  }
@@ -232,6 +294,9 @@ public partial class Rilevazioni: IDisposable
  // Modifica la classe Attivita per combaciare con i nomi JSON del server
  public class Attivita
  {
+  [JsonPropertyName("id")]
+  public int Id { get; set; }
+
   [JsonPropertyName("tipo")]
   public string Tipo { get; set; } = "";
 
@@ -296,6 +361,11 @@ public partial class Rilevazioni: IDisposable
    }
   }
 
+
+
+
+
+
  }
 
  private void AggiornaConteggioCoda()
@@ -317,6 +387,7 @@ public partial class Rilevazioni: IDisposable
  #endregion
 
  #region "Malattia"
+
  // Variabili per il modale Malattia
  private DateTime dataInizioMalattia = DateTime.Now;
  private DateTime dataFineMalattia = DateTime.Now;
@@ -325,14 +396,12 @@ public partial class Rilevazioni: IDisposable
  public async Task InviaMalattia()
  {
 
-  var url = Setting.ServerUrl;
-
+  var url = Setting.ServerUrl.ToLower();
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
-  if (!url.StartsWith("http"))
+  if (!url.StartsWith("http",StringComparison.OrdinalIgnoreCase))
   {
    url = $"http://{url}";
   }
-
 
   // 1. Recupero il token e la matricola (che abbiamo già caricato nel OnAfterRender)
   var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
@@ -396,9 +465,9 @@ public partial class Rilevazioni: IDisposable
  {
   // Recupero il token da sessionStorage
   var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
-  var url = Setting.ServerUrl;
 
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
+  var url = Setting.ServerUrl.ToLower();
   if (!url.StartsWith("http"))
   {
    url = $"http://{url}";
@@ -463,10 +532,9 @@ public partial class Rilevazioni: IDisposable
  {
   // Recupero il token
   var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
-  var url = Setting.ServerUrl;
-
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
-  if (!url.StartsWith("http"))
+  var url = Setting.ServerUrl.ToLower();
+  if (!url.StartsWith("http",StringComparison.OrdinalIgnoreCase))
   {
    url = $"http://{url}";
   }
@@ -525,18 +593,10 @@ public partial class Rilevazioni: IDisposable
  public async Task InviaTimbratura()
  {
 
-  await App.Current.MainPage.DisplayAlert("Info", "Fase:1" , "OK");
-
   // FASE 1. Recupero il token
   var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
-  var url = Setting.ServerUrl;
-
-  await App.Current.MainPage.DisplayAlert("Info", "Token:" + token, "OK");
-  await App.Current.MainPage.DisplayAlert("Info", "URL:" + url, "OK");
-
-
-
   // Se l'utente ha dimenticato di scrivere http://, lo aggiungiamo noi per sicurezza
+  var url = Setting.ServerUrl.ToLower();
   if (!url.StartsWith("http"))
   {
    url = $"http://{url}";
@@ -605,7 +665,6 @@ public partial class Rilevazioni: IDisposable
 
 
   // --- FASE 4: COSTRUZIONE OGGETTO ---
-  // Uso il modello che abbiamo creato (TimbraturaOffline) o un oggetto anonimo come facevi prima
   var data = new
   {
    id = 0,
@@ -637,9 +696,6 @@ public partial class Rilevazioni: IDisposable
    }
   }
 
-  await App.Current.MainPage.DisplayAlert("Info", "Fase:2", "OK");
-
-
 
   try
   {
@@ -649,30 +705,27 @@ public partial class Rilevazioni: IDisposable
    request.Content = JsonContent.Create(data);
    var response = await Http.SendAsync(request);
 
-   //// 2. Controllo specifico per il batch "In Pausa" (Errore 503)
-   //Setting.popupChiusoManualmente=false;
-   //Setting.NotifyChanges();
-   //if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
-   //{
-   // Setting.ServerInManutenzione = true;
-   // Setting.NotifyChanges();
-   // return;
-   //}
-   await App.Current.MainPage.DisplayAlert("Info", "Fase:3", "OK");
+   // 2. Controllo specifico per il batch "In Pausa" (Errore 503)
+   Setting.popupChiusoManualmente = false;
+   Setting.NotifyChanges();
+   if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+   {
+    Setting.ServerInManutenzione = true;
+    Setting.NotifyChanges();
+    return;
+   }
 
    if (response.IsSuccessStatusCode)
    {
-    await App.Current.MainPage.DisplayAlert("Info", "Fase:4", "OK");
 
-    //Setting.ServerInManutenzione = false;
-    //Setting.NotifyChanges();
+    Setting.ServerInManutenzione = false;
+    Setting.NotifyChanges();
     await CaricaStorico(); // Aggiorna la timeline per vedere il nuovo punto
    }
    else
    {
-    //Setting.ServerInManutenzione = false; // Se risponde (anche male), non è manutenzione
-    //Setting.NotifyChanges();
-    await App.Current.MainPage.DisplayAlert("Info", "Fase:5", "OK");
+    Setting.ServerInManutenzione = false; // Se risponde (anche male), non è manutenzione
+    Setting.NotifyChanges();
 
     if ( Setting.UseStorage == true ) {
      await SalvaOffline(data);
@@ -680,24 +733,21 @@ public partial class Rilevazioni: IDisposable
      await App.Current.MainPage.DisplayAlert("Offline", "Connessione assente. La timbratura è stata salvata sul telefono e verrà inviata appena possibile.", "OK");
     }
     else{
-     await App.Current.MainPage.DisplayAlert("Info", "Fase:6", "OK");
 
      // Leggiamo il messaggio di errore che arriva dal server
      var errorDetails = await response.Content.ReadAsStringAsync();
      var statusCode = (int)response.StatusCode;
      // Stampiamo in console per il programmatore
-     //Console.WriteLine($"ERRORE API: {statusCode} - {errorDetails}");
      // Avvisiamo l'utente
-     await App.Current.MainPage.DisplayAlert("Errore", $"ERRORE API: {statusCode} - {errorDetails}", "OK");
+     await App.Current.MainPage.DisplayAlert("Offline", "Connessione assente. La timbratura non è stata inviata. Riprovare piu' tardi.", "OK");
+     //await App.Current.MainPage.DisplayAlert("Errore", $"ERRORE API: {statusCode} - {errorDetails}", "OK");
     }
    }
   }
   catch (Exception ex)
   {
-   await App.Current.MainPage.DisplayAlert("Info", "Fase:7", "OK");
-
-   //Setting.ServerInManutenzione = false; // Non è 503, è un problema di rete
-   //Setting.NotifyChanges();
+   Setting.ServerInManutenzione = false; // Non è 503, è un problema di rete
+   Setting.NotifyChanges();
    if (Setting.UseStorage == true ) {
     await SalvaOffline(data);
     AggiornaConteggioCoda();
@@ -726,7 +776,6 @@ public partial class Rilevazioni: IDisposable
 
  #endregion
 
-
  #region "connessione internet"
 
  private async Task SalvaOffline(object timb)
@@ -746,7 +795,7 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
-   Console.WriteLine($"Errore salvataggio offline: {ex.Message}");
+   await App.Current.MainPage.DisplayAlert("Errore", $"Errore salvataggio offline: {ex.Message}", "OK");
   }
  }
 
@@ -809,7 +858,7 @@ public partial class Rilevazioni: IDisposable
    catch (Exception ex)
    {
     // Se fallisce una singola timbratura (es. timeout), ci fermiamo e riproveremo dopo
-    Console.WriteLine($"Sincronizzazione fallita per un elemento: {ex.Message}");
+    await App.Current.MainPage.DisplayAlert("Errore", $"Sincronizzazione fallita per un elemento: {ex.Message}", "OK");
     break;
    }
   }
@@ -837,6 +886,8 @@ public partial class Rilevazioni: IDisposable
  }
 
  #endregion
+
+
 
 
 

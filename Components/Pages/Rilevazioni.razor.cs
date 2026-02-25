@@ -161,10 +161,10 @@ public partial class Rilevazioni: IDisposable
   Nav.NavigateTo("/");
  }
 
- private dynamic selectedItem = null;
+ private Attivita? selectedItem = null;
  private bool isLoadingReason = false;
 
- private async Task RecoverReason(dynamic item)
+ private async Task RecoverReason(Attivita item)
  {
   // Se l'utente clicca sull'elemento già aperto, lo chiudiamo
   if (selectedItem == item)
@@ -200,7 +200,7 @@ public partial class Rilevazioni: IDisposable
  }
 
  // Esempio di metodo per la chiamata
- private async Task<string> GetReasonFromApi(dynamic item)
+ private async Task<string> GetReasonFromApi(Attivita item)
  {
 
   var url = Setting.ServerUrl.ToLower();

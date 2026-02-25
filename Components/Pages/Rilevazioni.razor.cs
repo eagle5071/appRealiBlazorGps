@@ -150,7 +150,6 @@ public partial class Rilevazioni: IDisposable
  }
 
  private bool mostraConfermaLogout = false;
-
  private void EffettuaLogout()
  {
   mostraConfermaLogout = true; // Mostra la modale invece del confirm browser
@@ -277,7 +276,7 @@ public partial class Rilevazioni: IDisposable
   }
   catch (Exception ex)
   {
-   //await App.Current.MainPage.DisplayAlert("Storico", ex.Message+" --- "+ ex.InnerException, "OK");
+   await App.Current.MainPage.DisplayAlert("Storico", ex.Message+" --- "+ ex.InnerException, "OK");
    Console.WriteLine($"Errore: {ex.Message}");
   }
  }
@@ -739,7 +738,15 @@ public partial class Rilevazioni: IDisposable
      var statusCode = (int)response.StatusCode;
      // Stampiamo in console per il programmatore
      // Avvisiamo l'utente
-     await App.Current.MainPage.DisplayAlert("Offline", "Connessione assente. La timbratura non è stata inviata. Riprovare piu' tardi.", "OK");
+     if (errorDetails=="Duplicato"){
+      await App.Current.MainPage.DisplayAlert("Offline", "Timbratura gia' inviata.", "OK");
+
+     }
+     else
+     {
+      await App.Current.MainPage.DisplayAlert("Offline", "Connessione assente. La timbratura non è stata inviata. Riprovare piu' tardi.", "OK");
+
+     }
      //await App.Current.MainPage.DisplayAlert("Errore", $"ERRORE API: {statusCode} - {errorDetails}", "OK");
     }
    }

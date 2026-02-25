@@ -83,11 +83,11 @@
             }
 			else
 			{
-	                @foreach (var item in storico)
-					{
-
+				@foreach (var item in storico)
+				{
 					<div class="timeline-item d-flex flex-column"
-						 @onclick="() => RecoverReason(item)" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee;">
+						 @onclick="() => RecoverReason(item)"
+						 style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee;">
 
 						<div class="d-flex align-items-center justify-content-between">
 							<div class="timeline-dot"></div>
@@ -96,37 +96,20 @@
 									@(item.Tipo == "Ferie" ? "🏖️" : item.Tipo == "Permesso" ? "⏱️" : "📍") @item.Tipo
 								</div>
 								<div class="entry-sub">
-									@((MarkupString)item.FormattaDati())
+									@((MarkupString)(item.FormattaDati() ?? ""))
 								</div>
 							</div>
 							<div class="badge @item.GetStatusCss" style="margin-left: 20px; white-space: nowrap;">@item.Status</div>
 						</div>
 
-						@* Sezione Dettaglio / Reason *@
-						@if (selectedItem == item)
+						@if (selectedItem?.Id == item.Id)
 						{
-							<div class="reason-detail" style="margin-left: 30px; margin-top: 7px; font-style: italic; color: #666; animation: fadeIn 0.3s;">
-								<strong>Motivazione:</strong> @FormattaRagione(@item.ReasonRaw.ToString())
+							<div class="reason-detail" style="margin-left: 30px; margin-top: 7px; font-style: italic; color: #666;">
+								<strong>Motivazione:</strong> @FormattaRagione(item.ReasonRaw?.ToString() ?? "")
 							</div>
 						}
 					</div>
-
-
-
-
-@* 							<div class="timeline-item d-flex align-items-center justify-content-between">
-		                        <div class="timeline-dot"></div>
-								<div class="timeline-content" style="flex-grow: 1; margin-left: 15px;">
-								   <div class="entry-title">
-									   @(item.Tipo == "Ferie" ? "🏖️" : item.Tipo == "Permesso" ? "⏱️" : "📍") @item.Tipo
-								   </div>
-								   <div class="entry-sub">
-									   @((MarkupString)item.FormattaDati())
-								   </div>
-								</div>
-								<div class="badge @item.GetStatusCss" style="margin-left: 50px; white-space: nowrap;">@item.Status</div>
-		                    </div>
- *@	                }
+				}
 
 
             }
@@ -360,19 +343,6 @@
 	}
 }
 
-@* @code {
-	// Supponendo che 'item' abbia una proprietà Id (o usa l'oggetto stesso)
-	private dynamic? selectedId = null;
-
-	private void ToggleReason(dynamic item)
-	{
-		if (selectedId == item)
-			selectedId = null; // Chiude se clicchi di nuovo
-		else
-			selectedId = item;
-	}
-}
- *@
 
 @if (isGpsLoading)
 {
